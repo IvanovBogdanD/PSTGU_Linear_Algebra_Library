@@ -88,8 +88,8 @@ $imaginary = $z->getImaginary(); // $imaginary = 3
 	$other (ComplexNumber): Комплексное число, которое будет прибавлено к текущему.
 	Возвращаемое значение: Новый объект ComplexNumber, представляющий сумму двух комплексных чисел.
 	Пример использования:
-php
-Copy code
+
+
 $z1 = new ComplexNumber(1, 2);
 $z2 = new ComplexNumber(3, 4);
 $z3 = $z1->add($z2); // $z3 = 4 + 6i
