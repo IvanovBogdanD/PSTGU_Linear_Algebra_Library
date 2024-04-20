@@ -1,5 +1,4 @@
-![image](![image](https://github.com/Negr1tos/PSTGU_Linear_Algebra_Library-/assets/117594819/4fa3effc-836b-4399-a483-d31d1120096f)
-)# PSTGU_Linear_Algebra_Library
+![image](https://github.com/Negr1tos/PSTGU_Linear_Algebra_Library-/assets/117594819/4fa3effc-836b-4399-a483-d31d1120096f)# PSTGU_Linear_Algebra_Library
 
 ## Библиотека для работы с линейной алгеброй
 Эта библиотека предоставляет классы и методы для работы с линейной алгеброй, включая
