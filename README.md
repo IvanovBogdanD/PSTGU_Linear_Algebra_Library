@@ -1,4 +1,4 @@
-![image](https://upload.wikimedia.org/wikipedia/ru/0/00/%D0%9B%D0%BE%D0%B3%D0%BE%D1%82%D0%B8%D0%BF_%D0%9F%D0%A1%D0%A2%D0%93%D0%A3.jpg)# PSTGU_Linear_Algebra_Library
+![image]([https://upload.wikimedia.org/wikipedia/ru/0/00/%D0%9B%D0%BE%D0%B3%D0%BE%D1%82%D0%B8%D0%BF_%D0%9F%D0%A1%D0%A2%D0%93%D0%A3.jpg])# PSTGU_Linear_Algebra_Library
 
 ## Библиотека для работы с линейной алгеброй
 Эта библиотека предоставляет классы и методы для работы с линейной алгеброй, включая
