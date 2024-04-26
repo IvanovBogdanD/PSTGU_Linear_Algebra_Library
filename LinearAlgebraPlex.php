@@ -32,6 +32,15 @@ class ComplexNumber
         return $this->imaginary;
     }
 
+    public function formatAsString(bool $standardFormat = true): string
+    {
+        if ($standardFormat) {
+            return "{$this->real} + {$this->imaginary}i";
+        } else {
+            return "{$this->real}:{$this->imaginary}";
+        }
+    }
+
     public function add(ComplexNumber $other)
     {
         $real = $this->real + $other->real;
