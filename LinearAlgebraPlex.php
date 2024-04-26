@@ -39,8 +39,12 @@ class ComplexNumber
  *                            если false, то альтернативный формат (a:b).
  * @return string Строковое представление комплексного числа.
  */
-public function formatAsString(bool $standardFormat = true): string
+public function formatAsString(bool $standardFormat = null)
 {
+    if ($standardFormat === null) {
+        $standardFormat = true;
+    }
+
     if ($standardFormat) {
         return "{$this->real} + {$this->imaginary}i";
     } else {
