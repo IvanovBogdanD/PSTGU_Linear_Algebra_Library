@@ -1,79 +1,116 @@
 <?php
 
 namespace LinearAlgebraPlex;
-
-/**
- * Базовый класс для исключений в библиотеке.
- */
+/**The library is distributed free of charge under a free license. Authors: Беликов Тихон Андреевич - tiKhon.belikov@yandex.ru, Иванов Богдан Дмитриевич - bogdanmikado@yandex.ru
+   */
 class Exception extends \Exception
 {
-    // Это стандартный класс исключений в PHP
-    // Вы можете добавить дополнительную логику или методы по необходимости(или когда-нибудь это сделаем мы)
 }
-// Класс для комплексных чисел
+
 class ComplexNumber
 {
     private $real;
     private $imaginary;
-
+    
     public function __construct($real, $imaginary)
     {
         $this->real = $real;
         $this->imaginary = $imaginary;
     }
-
+    
+    public function __toString()
+    {
+        return "{$this->real} + {$this->imaginary}i";
+    }
+    
     public function getReal()
     {
         return $this->real;
     }
-
+    
     public function getImaginary()
     {
         return $this->imaginary;
     }
-
-    /**
- * Форматирует комплексное число в строку.
- *
- * @param bool $standardFormat Если true, то используется стандартный формат (a + bi),
- *                            если false, то альтернативный формат (a:b).
- * @return string Строковое представление комплексного числа.
- */
-public function formatAsString(bool $standardFormat = null)
-{
-    if ($standardFormat === null) {
-        $standardFormat = true;
+    
+    // Получение модуля комплексного числа
+    public function magnitude()
+    {
+        return sqrt(pow($this->real, 2) + pow($this->imaginary, 2));
     }
-
-    if ($standardFormat) {
-        return "{$this->real} + {$this->imaginary}i";
-    } else {
-        return "{$this->real}:{$this->imaginary}";
+    
+    // Альтернативное название для модуля
+    public function abs()
+    {
+        return $this->magnitude();
     }
-}
-
-
+    
+    // Получение аргумента комплексного числа в радианах
+    public function argument()
+    {
+        return atan2($this->imaginary, $this->real);
+    }
+    
+    // Получение сопряженного комплексного числа
+    public function conjugate()
+    {
+        return new ComplexNumber($this->real, -$this->imaginary);
+    }
+    
+    // Возведение в степень по формуле Муавра
+    public function power($n)
+    {
+        $r = $this->magnitude();
+        $phi = $this->argument();
+        
+        $newR = pow($r, $n);
+        $newPhi = $n * $phi;
+        
+        $newReal = $newR * cos($newPhi);
+        $newImaginary = $newR * sin($newPhi);
+        
+        return new ComplexNumber($newReal, $newImaginary);
+    }
+    
+    // Получение тригонометрической формы в виде строки
+    public function toTrigonometric()
+    {
+        $r = $this->magnitude();
+        $phi = $this->argument();
+        $phiDegrees = rad2deg($phi);
+        return sprintf("%.2f(cos(%.2f°) + i*sin(%.2f°))", $r, $phiDegrees, $phiDegrees);
+    }
+    
+    // Создание комплексного числа из тригонометрической формы
+    public static function fromTrigonometric($r, $phiDegrees)
+    {
+        $phi = deg2rad($phiDegrees);
+        $real = $r * cos($phi);
+        $imaginary = $r * sin($phi);
+        return new ComplexNumber($real, $imaginary);
+    }
+    
     public function add(ComplexNumber $other)
     {
         $real = $this->real + $other->real;
         $imaginary = $this->imaginary + $other->imaginary;
         return new ComplexNumber($real, $imaginary);
     }
-
+    
     public function subtract(ComplexNumber $other)
     {
         $real = $this->real - $other->real;
         $imaginary = $this->imaginary - $other->imaginary;
         return new ComplexNumber($real, $imaginary);
     }
-
+    
     public function multiply(ComplexNumber $other)
     {
         $real = $this->real * $other->real - $this->imaginary * $other->imaginary;
         $imaginary = $this->real * $other->imaginary + $this->imaginary * $other->real;
         return new ComplexNumber($real, $imaginary);
     }
-
+    
     public function divide(ComplexNumber $other)
     {
         $denominator = pow($other->real, 2) + pow($other->imaginary, 2);
@@ -83,20 +120,11 @@ public function formatAsString(bool $standardFormat = null)
     }
 }
 
-// Базовый класс для N-мерных массивов
 class NArray
 {
     protected $data;
     protected $dimensions;
 
-    /**
-     * Конструктор для инициализации N-мерного массива.
-     *
-     * @param array|null $data Многомерный массив с данными для инициализации. Если не указано, массив будет создан с нулями.
-     * @param int[] $dimensions Размерности массива в формате [размерность_1, размерность_2, ..., размерность_N]. Если не указано, размерности будут определены из $data.
-     * @param string $fillType Способ заполнения массива: 'zero' (по умолчанию), 'random', 'random_complex' или 'random_complex_int'. Игнорируется, если $data указано.
-     * @param bool $isImaginaryInt Флаг, указывающий, что мнимая часть комплексных чисел должна быть целочисленной (действует только при $fillType = 'random_complex' и $data не указано).
-     */
     public function __construct(array $data = null, array $dimensions = null, $fillType = 'zero', $isImaginaryInt = false)
     {
         if ($data !== null) {
@@ -109,59 +137,44 @@ class NArray
             throw new \InvalidArgumentException("Необходимо указать либо данные, либо размерности массива.");
         }
     }
-    /**
- * Инициализирует N-мерный массив по заданным размерностям и способу заполнения.
- *
- * @param array $dimensions Размерности массива в формате [размерность_1, размерность_2, ..., размерность_N].
- * @param string $fillType Способ заполнения массива: 'zero' (по умолчанию), 'random', 'random_complex' или 'random_complex_int'.
- * @param bool $isImaginaryInt Флаг, указывающий, что мнимая часть комплексных чисел должна быть целочисленной (действует только при $fillType = 'random_complex').
- * @return array Инициализированный N-мерный массив.
- */
-private function initializeArray($dimensions, $fillType = 'zero', $isImaginaryInt = false)
-{
-    if (empty($dimensions)) {
-        return [];
-    }
 
-    $size = array_shift($dimensions);
-    $result = [];
-
-    for ($i = 0; $i < $size; $i++) {
-        $result[] = $this->initializeArray($dimensions, $fillType, $isImaginaryInt);
-    }
-
-    if (empty($dimensions)) {
-        switch ($fillType) {
-            case 'zero':
-                return $result;
-            case 'random':
-                return array_map(function () {
-                    return mt_rand() / mt_getrandmax() * 2 - 1;
-                }, $result);
-            case 'random_complex':
-                return array_map(function () use ($isImaginaryInt) {
-                    $real = mt_rand() / mt_getrandmax() * 2 - 1;
-                    $imaginary = ($isImaginaryInt ? mt_rand() : mt_rand() / mt_getrandmax() * 2 - 1);
-                    return new ComplexNumber($real, $imaginary);
-                }, $result);
-            case 'random_complex_int':
-                return array_map(function () use ($isImaginaryInt) {
-                    $real = mt_rand();
-                    $imaginary = ($isImaginaryInt ? mt_rand() : mt_rand() / mt_getrandmax() * 2 - 1);
-                    return new ComplexNumber($real, $imaginary);
-                }, $result);
+    private function initializeArray($dimensions, $fillType = 'zero', $isImaginaryInt = false)
+    {
+        if (empty($dimensions)) {
+            return [];
         }
+
+        $size = array_shift($dimensions);
+        $result = [];
+
+        for ($i = 0; $i < $size; $i++) {
+            if (empty($dimensions)) {
+                switch ($fillType) {
+                    case 'zero':
+                        $result[] = 0;
+                        break;
+                    case 'random':
+                        $result[] = mt_rand() / mt_getrandmax() * 2 - 1;
+                        break;
+                    case 'random_complex':
+                        $real = mt_rand() / mt_getrandmax() * 2 - 1;
+                        $imaginary = ($isImaginaryInt ? mt_rand() : mt_rand() / mt_getrandmax() * 2 - 1);
+                        $result[] = new ComplexNumber($real, $imaginary);
+                        break;
+                    case 'random_complex_int':
+                        $real = mt_rand();
+                        $imaginary = ($isImaginaryInt ? mt_rand() : mt_rand() / mt_getrandmax() * 2 - 1);
+                        $result[] = new ComplexNumber($real, $imaginary);
+                        break;
+                }
+            } else {
+                $result[] = $this->initializeArray($dimensions, $fillType, $isImaginaryInt);
+            }
+        }
+
+        return $result;
     }
 
-    return $result;
-}
-
-    /**
-     * Рекурсивный метод для разбора входных данных и преобразования их в многомерный массив.
-     *
-     * @param array $data Входные данные (одномерный или многомерный массив).
-     * @return array Многомерный массив с данными.
-     */
     private function parseData(array $data)
     {
         $result = [];
@@ -176,28 +189,60 @@ private function initializeArray($dimensions, $fillType = 'zero', $isImaginaryIn
     }
 
     /**
-     * Метод для разбора значения и преобразования его в комплексное число (если необходимо).
-     *
-     * @param mixed $value Значение для разбора.
-     * @return mixed Вещественное или комплексное число.
-     */
-    private function parseValue($value)
-    {
-        if (strpos($value, ':') !== false) {
-            $parts = explode(':', $value);
-            $real = (float) ($parts[0] ?: 0);
-            $imaginary = (float) ($parts[1] ?: 0);
-            return new ComplexNumber($real, $imaginary);
-        }
-        return (float) $value;
+ * Метод для разбора значения и преобразования его в комплексное число.
+ *
+ * @param mixed $value Значение для разбора.
+ * @return mixed Вещественное или комплексное число.
+ */
+private function parseValue($value)
+{
+    // Если значение уже является комплексным числом
+    if (is_object($value) && is_a($value, 'ComplexNumber')) {
+        return $value;
     }
-
-/**
-     * Метод для получения размерности N-мерного массива.
-     *
-     * @param array $array Многомерный массив.
-     * @return array Массив с размерностями.
-     */
+    
+    // Преобразуем в строку для унификации обработки
+    $value = (string)$value;
+    
+    // Проверяем формат "a:b"
+    if (strpos($value, ':') !== false) {
+        $parts = explode(':', $value);
+        $real = (float)($parts[0] ?: 0);
+        $imaginary = (float)($parts[1] ?: 0);
+        return new ComplexNumber($real, $imaginary);
+    }
+    
+    // Проверяем чисто мнимое число (bi или -bi)
+    if (preg_match('/^([+-])?(\d*\.?\d*)?i$/', $value, $matches)) {
+        $imaginary = 1;
+        if (isset($matches[2]) && $matches[2] !== '') {
+            $imaginary = (float)$matches[2];
+        }
+        if (isset($matches[1]) && $matches[1] === '-') {
+            $imaginary = -$imaginary;
+        }
+        return new ComplexNumber(0, $imaginary);
+    }
+    
+    // Проверяем стандартный формат записи (a+bi или a-bi)
+    if (preg_match('/^(-?\d*\.?\d*)?(?:\s*([+-])\s*(\d*\.?\d*)?i)?$/', $value, $matches)) {
+        $real = ($matches[1] !== '') ? (float)$matches[1] : 0;
+        $imaginary = 0;
+        if (isset($matches[2])) {
+            $imaginary = 1;
+            if (isset($matches[3]) && $matches[3] !== '') {
+                $imaginary = (float)$matches[3];
+            }
+            if ($matches[2] === '-') {
+                $imaginary = -$imaginary;
+            }
+        }
+        return new ComplexNumber($real, $imaginary);
+    }
+    
+    // Если не удалось распознать формат, возвращаем 0
+    return 0.0;
+}
     private function getDimensions(array $array)
     {
         if (empty($array)) {
@@ -211,13 +256,6 @@ private function initializeArray($dimensions, $fillType = 'zero', $isImaginaryIn
         return $dimensions;
     }
 
-    /**
-     * Метод для получения значения элемента по индексам.
-     *
-     * @param array $indices Массив индексов для доступа к элементу.
-     * @param bool $asComplexNumber Флаг, указывающий, что значение должно быть возвращено как комплексное число.
-     * @return mixed Значение элемента (вещественное или комплексное число).
-     */
     public function getElement($indices, $asComplexNumber = false)
     {
         $element = $this->data;
@@ -230,13 +268,6 @@ private function initializeArray($dimensions, $fillType = 'zero', $isImaginaryIn
         return $asComplexNumber ? $this->ensureComplexNumber($element) : $element;
     }
 
-    /**
-     * Метод для установки значения элемента по индексам.
-     *
-     * @param array $indices Массив индексов для доступа к элементу.
-     * @param mixed $value Значение для установки (вещественное или комплексное число).
-     * @param bool $asComplexNumber Флаг, указывающий, что значение является комплексным числом.
-     */
     public function setElement($indices, $value, $asComplexNumber = false)
     {
         $pointer = &$this->data;
@@ -250,78 +281,100 @@ private function initializeArray($dimensions, $fillType = 'zero', $isImaginaryIn
         $pointer[$lastIndex] = $asComplexNumber ? $this->ensureComplexNumber($value) : $value;
     }
 
-    /**
-     * Вспомогательный метод для преобразования значения в комплексное число (если необходимо).
-     *
-     * @param mixed $value Значение для преобразования.
-     * @return mixed Комплексное число или исходное значение.
-     */
     private function ensureComplexNumber($value)
     {
-        return is_a($value, 'ComplexNumber') ? $value : new ComplexNumber($value, 0);
+        return is_a($value, 'LinearAlgebraPlex\ComplexNumber') ? $value : new ComplexNumber($value, 0);
     }
-    /**
- * Отображает содержимое N-мерного массива в виде текста.
- */
-public function display()
-{
-    $this->printArray($this->data);
-}
 
-/**
- * Вспомогательный рекурсивный метод для вывода массива в виде текста.
- *
- * @param array $array Многомерный массив для вывода.
- * @param int $indent Уровень отступа для вложенных массивов.
- */
-private function printArray($array, $indent = 0)
-{
-    if (!is_array($array)) {
-        echo str_repeat('  ', $indent) . $array . "\n";
-    } else {
-        foreach ($array as $element) {
-            $this->printArray($element, $indent + 1);
+    public function display($indent = 0, $separator = ' ')
+    {
+        $this->printArray($this->data, $indent, $separator);
+    }
+    
+    private function printArray($array, $indent = 0, $separator = ' ')
+    {
+        if (!is_array($array)) {
+            if (is_object($array) && is_a($array, 'LinearAlgebraPlex\ComplexNumber')) {
+                $real = $array->getReal();
+                $imaginary = $array->getImaginary();
+                
+                // Начинаем формирование строки
+                $output = str_repeat('  ', $indent);
+                
+                // Чисто мнимое число
+                if ($real == 0 && $imaginary != 0) {
+                    if ($imaginary == 1) {
+                        $output .= "i ";
+                    } elseif ($imaginary == -1) {
+                        $output .= "-i ";
+                    } elseif ($imaginary > 0) {
+                        $output .= $imaginary . "i ";
+                    } else {
+                        $output .= "-" . abs($imaginary) . "i ";
+                    }
+                }
+                // Чисто вещественное число
+                elseif ($imaginary == 0) {
+                    $output .= $real . " ";
+                }
+                // Комплексное число
+                else {
+                    if ($real != 0) {
+                        $output .= $real;
+                    }
+                    if ($imaginary > 0) {
+                        $output .= " + " . $imaginary . "i ";
+                    } elseif ($imaginary < 0) {
+                        $output .= " - " . abs($imaginary) . "i ";
+                    } else {
+                        $output .= "i ";
+                    }
+                }
+                echo $output;
+            } else {
+                echo str_repeat('  ', $indent) . $array . " ";
+            }
+        } else {
+            foreach ($array as $element) {
+                $this->printArray($element, $indent + 1, $separator);
+                if (!is_array($element)) {
+                    echo $separator;
+                }
+            }
+            if ($indent === 0) {
+                echo "\n";
+            }
         }
     }
-}
-
-    /**
-     * Возвращает данные N-мерного массива.
-     *
-     * @return array Данные N-мерного массива.
-     */
-    public function getData()
+   public function getData()
     {
         return $this->data;
     }
 
-    /**
-     * Устанавливает данные N-мерного массива.
-     *
-     * @param array $data Данные N-мерного массива.
-     */
     public function setData(array $data)
     {
         $this->data = $this->parseData($data);
+        $this->dimensions = $this->getDimensions($this->data);
     }
-    /**
- * Возвращает размерности N-мерного массива.
- *
- * @return array Массив с размерностями.
- */
-
-
-
 }
-// Класс для двумерных массивов (матриц)
+
 class Matrix extends NArray
 {
     public function __construct($rows, $cols, $type = 'zero', $isComplex = false, $isPrime = false)
     {
-        parent::__construct([$rows, $cols], $type, $isComplex);
+        if ($rows <= 0 || $cols <= 0) {
+            throw new Exception("Invalid matrix dimensions");
+        }
+        parent::__construct(null, [$rows, $cols], $type, $isComplex);
         if ($isPrime) {
             $this->fillWithPrimes();
         }
+    }
+    
+    public function IsInvertible()
+    {
+        $det = $this->determinant();
+        return $det !== 0;
     }
 
     private function fillWithPrimes()
@@ -361,8 +414,30 @@ class Matrix extends NArray
         }
     }
 
-    
     public function add(Matrix $other)
+    {
+        if ($this->dimensions != $other->dimensions) {
+            throw new Exception("Matrices must have the same dimensions");
+        }
+
+        $result = new Matrix($this->dimensions[0], $this->dimensions[1]);
+        for ($i = 0; $i < $this->dimensions[0]; $i++) {
+            for ($j = 0; $j < $this->dimensions[1]; $j++) {
+                $value1 = $this->getElement([$i, $j]);
+                $value2 = $other->getElement([$i, $j]);
+
+                if (is_a($value1, 'LinearAlgebraPlex\ComplexNumber') && is_a($value2, 'LinearAlgebraPlex\ComplexNumber')) {
+                    $result->setElement([$i, $j], $value1->add($value2));
+                } elseif (is_numeric($value1) && is_numeric($value2)) {
+                    $result->setElement([$i, $j], $value1 + $value2);
+                } else {
+                    throw new Exception("Unsupported operation");
+                }
+            }
+        }
+        return $result;
+    }
+    public function subtract(Matrix $other)
 {
     if ($this->dimensions != $other->dimensions) {
         throw new Exception("Matrices must have the same dimensions");
@@ -371,26 +446,111 @@ class Matrix extends NArray
     $result = new Matrix($this->dimensions[0], $this->dimensions[1]);
     for ($i = 0; $i < $this->dimensions[0]; $i++) {
         for ($j = 0; $j < $this->dimensions[1]; $j++) {
-            $result->setElement([$i, $j], $this->getElement([$i, $j])->add($other->getElement([$i, $j])));
+            $value1 = $this->getElement([$i, $j]);
+            $value2 = $other->getElement([$i, $j]);
+
+            if (is_a($value1, 'LinearAlgebraPlex\ComplexNumber') && 
+                is_a($value2, 'LinearAlgebraPlex\ComplexNumber')) {
+                $result->setElement([$i, $j], $value1->subtract($value2));
+            } elseif (is_numeric($value1) && is_numeric($value2)) {
+                $result->setElement([$i, $j], $value1 - $value2);
+            } elseif (is_numeric($value1) && 
+                     is_a($value2, 'LinearAlgebraPlex\ComplexNumber')) {
+                $complexValue1 = new ComplexNumber($value1, 0);
+                $result->setElement([$i, $j], $complexValue1->subtract($value2));
+            } elseif (is_a($value1, 'LinearAlgebraPlex\ComplexNumber') && 
+                     is_numeric($value2)) {
+                $complexValue2 = new ComplexNumber($value2, 0);
+                $result->setElement([$i, $j], $value1->subtract($complexValue2));
+            } else {
+                throw new Exception("Unsupported operation");
+            }
         }
     }
     return $result;
 }
 
-public function multiply(Matrix $other)
+
+    public function multiply(Matrix $other)
+    {
+        if ($this->dimensions[1] != $other->dimensions[0]) {
+            throw new Exception("Matrices have invalid dimensions for multiplication");
+        }
+
+        foreach ($this->data as $row) {
+            foreach ($row as $element) {
+                if (!is_a($element, 'LinearAlgebraPlex\ComplexNumber') && !is_numeric($element)) {
+                    throw new Exception("Unsupported operation");
+                }
+            }
+        }
+
+        foreach ($other->data as $row) {
+            foreach ($row as $element) {
+                if (!is_a($element, 'LinearAlgebraPlex\ComplexNumber') && !is_numeric($element)) {
+                    throw new Exception("Unsupported operation");
+                }
+            }
+        }
+
+        $result = new Matrix($this->dimensions[0], $other->dimensions[1]);
+        for ($i = 0; $i < $result->dimensions[0]; $i++) {
+            for ($j = 0; $j < $result->dimensions[1]; $j++) {
+                $sumScalar = 0;
+                $sumComplex = null;
+                for ($k = 0; $k < $this->dimensions[1]; $k++) {
+                    $value1 = $this->getElement([$i, $k]);
+                    $value2 = $other->getElement([$k, $j]);
+
+                    if (is_a($value1, 'LinearAlgebraPlex\ComplexNumber') && is_a($value2, 'LinearAlgebraPlex\ComplexNumber')) {
+                        $product = $value1->multiply($value2);
+                    } elseif (is_numeric($value1) && is_numeric($value2)) {
+                        $product = $value1 * $value2;
+                    } elseif (is_a($value1, 'LinearAlgebraPlex\ComplexNumber') && is_numeric($value2)) {
+                        $product = $value1->multiply(new ComplexNumber($value2, 0));
+                    } elseif (is_numeric($value1) && is_a($value2, 'LinearAlgebraPlex\ComplexNumber')) {
+                        $product = $value2->multiply(new ComplexNumber($value1, 0));
+                    } else {
+                        throw new Exception("Unsupported operation");
+                    }
+
+                    if (is_a($product, 'LinearAlgebraPlex\ComplexNumber')) {
+                        if ($sumComplex === null) {
+                            $sumComplex = $product;
+                        } else {
+                            $sumComplex = $sumComplex->add($product);
+                        }
+                    } else {
+                        $sumScalar += $product;
+                    }
+                }
+                if ($sumComplex !== null) {
+                    $result->setElement([$i, $j], $sumComplex);
+                } else {
+                    $result->setElement([$i, $j], $sumScalar);
+                }
+            }
+        }
+        return $result;
+    }
+    public function multiplyByComplexNumber($complexNumber)
 {
-    if ($this->dimensions[1] != $other->dimensions[0]) {
-        throw new Exception("Matrices have invalid dimensions for multiplication");
+    if (!is_a($complexNumber, 'LinearAlgebraPlex\ComplexNumber')) {
+        throw new Exception("Argument must be a ComplexNumber instance");
     }
 
-    $result = new Matrix($this->dimensions[0], $other->dimensions[1]);
-    for ($i = 0; $i < $result->dimensions[0]; $i++) {
-        for ($j = 0; $j < $result->dimensions[1]; $j++) {
-            $sum = new ComplexNumber(0, 0);
-            for ($k = 0; $k < $this->dimensions[1]; $k++) {
-                $sum = $sum->add($this->getElement([$i, $k])->multiply($other->getElement([$k, $j])));
+    $result = new Matrix($this->dimensions[0], $this->dimensions[1], 'zero', true);
+    for ($i = 0; $i < $this->dimensions[0]; $i++) {
+        for ($j = 0; $j < $this->dimensions[1]; $j++) {
+            $value = $this->getElement([$i, $j]);
+            if (is_a($value, 'LinearAlgebraPlex\ComplexNumber')) {
+                $result->setElement([$i, $j], $value->multiply($complexNumber));
+            } elseif (is_numeric($value)) {
+                $complexValue = new ComplexNumber($value, 0);
+                $result->setElement([$i, $j], $complexValue->multiply($complexNumber));
+            } else {
+                throw new Exception("Unsupported element type in matrix");
             }
-            $result->setElement([$i, $j], $sum);
         }
     }
     return $result;
@@ -461,81 +621,79 @@ public function solveLinearSystem($b)
 {
     $n = $this->dimensions[0];
     $matrix = $this->data;
-    $det = 1;
+    $det = new ComplexNumber(1, 0);  // Инициализируем определитель как комплексное число 1 + 0i
 
     for ($i = 0; $i < $n; $i++) {
         $maxRow = $i;
         for ($j = $i + 1; $j < $n; $j++) {
-            if (abs($matrix[$j][$i]) > abs($matrix[$maxRow][$i])) {
+            if ($matrix[$j][$i]->abs() > $matrix[$maxRow][$i]->abs()) {
                 $maxRow = $j;
             }
         }
 
-        if ($matrix[$maxRow][$i] == 0) {
-            return 0; // Матрица вырожденная
+        if ($matrix[$maxRow][$i]->abs() == 0) {
+            return new ComplexNumber(0, 0);  // Матрица вырожденная, возвращаем 0 + 0i
         }
 
         if ($maxRow != $i) {
-            $det = -$det;
+            $det = $det->multiply(new ComplexNumber(-1, 0));  // Меняем знак определителя
             $temp = $matrix[$i];
             $matrix[$i] = $matrix[$maxRow];
             $matrix[$maxRow] = $temp;
         }
 
-        $det *= $matrix[$i][$i];
+        $det = $det->multiply($matrix[$i][$i]);
 
         for ($j = $i + 1; $j < $n; $j++) {
-            $factor = $matrix[$j][$i] / $matrix[$i][$i];
+            $factor = $matrix[$j][$i]->divide($matrix[$i][$i]);
             for ($k = $i + 1; $k < $n; $k++) {
-                $matrix[$j][$k] -= $factor * $matrix[$i][$k];
+                $matrix[$j][$k] = $matrix[$j][$k]->subtract($factor->multiply($matrix[$i][$k]));
             }
         }
     }
 
     return $det;
 }
+
 
 private function luDeterminant()
 {
     $n = $this->dimensions[0];
     $matrix = $this->data;
-    $det = 1;
+    $det = new ComplexNumber(1, 0);  // Начальное значение определителя
 
     for ($i = 0; $i < $n; $i++) {
         $maxRow = $i;
         for ($j = $i + 1; $j < $n; $j++) {
-            if (abs($matrix[$j][$i]) > abs($matrix[$maxRow][$i])) {
+            if ($matrix[$j][$i]->abs() > $matrix[$maxRow][$i]->abs()) {
                 $maxRow = $j;
             }
         }
 
-        if ($matrix[$maxRow][$i] == 0) {
-            return 0; // Матрица вырожденная
+        if ($matrix[$maxRow][$i]->abs() == 0) {
+            return new ComplexNumber(0, 0);  // Матрица вырожденная
         }
 
         if ($maxRow != $i) {
-            $det = -$det;
+            $det = $det->multiply(new ComplexNumber(-1, 0));  // Меняем знак определителя
             $temp = $matrix[$i];
             $matrix[$i] = $matrix[$maxRow];
             $matrix[$maxRow] = $temp;
         }
 
-        $det *= $matrix[$i][$i];
+        $det = $det->multiply($matrix[$i][$i]);
 
         for ($j = $i + 1; $j < $n; $j++) {
-            $factor = $matrix[$j][$i] / $matrix[$i][$i];
+            $factor = $matrix[$j][$i]->divide($matrix[$i][$i]);
             for ($k = $i + 1; $k < $n; $k++) {
-                $matrix[$j][$k] -= $factor * $matrix[$i][$k];
+                $matrix[$j][$k] = $matrix[$j][$k]->subtract($factor->multiply($matrix[$i][$k]));
             }
         }
     }
 
-    for ($i = 0; $i < $n; $i++) {
-        $det *= $matrix[$i][$i];
-    }
-
     return $det;
 }
+
 
 
     
@@ -583,51 +741,96 @@ private function luDeterminant()
      * @return Matrix|null Обратная матрица или null, если матрица вырожденная.
      */
     public function inverse()
-    {
-        $n = $this->dimensions[0];
-        $augmented = array_merge($this->data, array_fill(0, $n, array_fill(0, $n, 0)));
-        for ($i = 0; $i < $n; $i++) {
-            $augmented[$i] = array_merge($augmented[$i], [new ComplexNumber(1, 0)]);
-        }
-
-        for ($i = 0; $i < $n; $i++) {
-            $maxRow = $i;
-            for ($j = $i + 1; $j < $n; $j++) {
-                if ($augmented[$j][$i]->abs() > $augmented[$maxRow][$i]->abs()) {
-                    $maxRow = $j;
-                }
-            }
-
-            if ($augmented[$maxRow][$i]->abs() == 0) {
-                return null; // Матрица вырожденная
-            }
-
-            if ($maxRow != $i) {
-                $temp = $augmented[$i];
-                $augmented[$i] = $augmented[$maxRow];
-                $augmented[$maxRow] = $temp;
-            }
-
-            $augmented[$i] = array_map(function ($value) use ($augmented, $i) {
-                return $value->divide($augmented[$i][$i]);
-            }, $augmented[$i]);
-
-            for ($j = 0; $j < $n; $j++) {
-                if ($j != $i) {
-                    $factor = $augmented[$j][$i];
-                    $augmented[$j] = array_map(function ($value, $other) use ($factor, $i) {
-                        return $value->subtract($factor->multiply($other));
-                    }, $augmented[$j], $augmented[$i]);
-                }
-            }
-        }
-
-        $inverse = array_map(function ($row) use ($n) {
-            return array_slice($row, $n);
-        }, $augmented);
-
-        return new Matrix($n, $n, $inverse);
+{
+	if ($this->IsInvertible() == false)
+		{
+			print("Матрица необратима");
+			return null;
+		}
+	
+    $n = $this->dimensions[0];
+    $augmented = array_merge($this->data, array_fill(0, $n, array_fill(0, $n, 0)));
+    for ($i = 0; $i < $n; $i++) {
+        $augmented[$i] = array_merge($augmented[$i], [new ComplexNumber(1, 0)]);
     }
+
+    for ($i = 0; $i < $n; $i++) {
+        $maxRow = $i;
+        for ($j = $i + 1; $j < $n; $j++) {
+            if (is_a($augmented[$j][$i], 'ComplexNumber')) {
+                $abs1 = $augmented[$j][$i]->abs();
+            } elseif (is_numeric($augmented[$j][$i])) {
+                $abs1 = abs($augmented[$j][$i]);
+            } else {
+                throw new Exception("Unsupported operation");
+            }
+
+            if (is_a($augmented[$maxRow][$i], 'ComplexNumber')) {
+                $abs2 = $augmented[$maxRow][$i]->abs();
+            } elseif (is_numeric($augmented[$maxRow][$i])) {
+                $abs2 = abs($augmented[$maxRow][$i]);
+            } else {
+                throw new Exception("Unsupported operation");
+            }
+
+            if ($abs1 > $abs2) {
+                $maxRow = $j;
+            }
+        }
+
+        if (is_a($augmented[$maxRow][$i], 'ComplexNumber') && $augmented[$maxRow][$i]->abs() == 0) {
+            return null; // Матрица вырожденная
+        }
+
+        if ($maxRow != $i) {
+            $temp = $augmented[$i];
+            $augmented[$i] = $augmented[$maxRow];
+            $augmented[$maxRow] = $temp;
+        }
+
+        $augmented[$i] = array_map(function ($value) use ($augmented, $i) {
+            if (is_a($value, 'ComplexNumber')) {
+                return $value->divide($augmented[$i][$i]);
+            } elseif (is_numeric($value)) {
+                return $value / $augmented[$i][$i];
+            } else {
+                print("Unsupported operation");
+            }
+        }, $augmented[$i]);
+
+        for ($j = 0; $j < $n; $j++) {
+            if ($j != $i) {
+                $factor = $augmented[$j][$i];
+                $augmented[$j] = array_map(function ($value, $other) use ($factor, $i) {
+                    if (is_a($value, 'ComplexNumber') && is_a($other, 'ComplexNumber')) {
+                        return $value->subtract($factor->multiply($other));
+                    } elseif (is_a($value, 'ComplexNumber') && is_numeric($other)) {
+                        return $value->subtract(new ComplexNumber($factor->getReal() * $other, $factor->getImaginary() * $other));
+                    } elseif (is_numeric($value) && is_a($other, 'ComplexNumber')) {
+                        return $value - $factor * $other->getReal();
+                    } elseif (is_numeric($value) && is_numeric($other)) {
+                        return $value - $factor * $other;
+                    } elseif (is_a($value, 'ComplexNumber') && is_a($factor, 'ComplexNumber') && is_numeric($other)) {
+                        return $value->subtract($factor->multiply(new ComplexNumber($other, 0)));
+                    } elseif (is_numeric($value) && is_a($factor, 'ComplexNumber') && is_a($other, 'ComplexNumber')) {
+                        return $value - $factor->multiply($other)->getReal();
+                    } else {
+                        print("Unsupported operation");
+                    }
+                }, $augmented[$j], $augmented[$i]);
+            }
+        }
+    }
+
+    $inverse = array_map(function ($row) use ($n) {
+        return array_slice($row, $n);
+    }, $augmented);
+
+    return $inverse;
+}
+
+
+
 
     /**
      * Находит собственные векторы и собственные значения матрицы.
@@ -781,7 +984,7 @@ private function setColumnVector($index, Vector $vector)
     }
 
     /**
-     * Выполняет LU-факторизацию матрицы с использованием алгоритма Дуліттла.
+     * Выполняет LU-факторизацию матрицы с использованием алгоритма Дулиттла.
      *
      * @param bool $partial Флаг, указывающий на необходимость выполнения частичной факторизации.
      * @return array Массив, содержащий матрицы L и U.
@@ -861,25 +1064,61 @@ private function setColumnVector($index, Vector $vector)
     $Q = $this->createIdentityMatrix($n);
     $R = clone $this;
 
-    for ($j = 0; $j < min($n, $m); $j++) {
+    for ($j = 0; $j < min($n - 1, $m); $j++) {
         $x = $R->getColumnVector($j, $j);
-        $sigma = $x->getElement([0])->multiply(new ComplexNumber(-$x->getElement([0])->sign(), 0));
-        $u = $x->add($sigma);
+        
+        // Вычисляем норму вектора-столбца
+        $normX = $x->norm();
+        if ($normX == 0) continue;
 
-        if ($u->norm() !== 0) {
-            $v = $u->divide($u->norm());
-            $P = $this->createIdentityMatrix($n);
-            for ($i = 0; $i < $n; $i++) {
-                $P->setElement([$i, $i], new ComplexNumber(2, 0));
+        // Создаем знаковый множитель
+        $sign = $x->getElement([0])->abs() > 0 ? 
+                $x->getElement([0])->divide(new ComplexNumber($x->getElement([0])->abs(), 0)) :
+                new ComplexNumber(1, 0);
+                
+        $u = $x->add(new Vector([new ComplexNumber($normX, 0)], true)->multiply($sign));
+        $normU = $u->norm();
+        
+        if ($normU == 0) continue;
+        
+        // Нормализуем вектор u
+        $v = $u->divide(new ComplexNumber($normU, 0));
+        
+        // Создаем матрицу отражения
+        $P = $this->createIdentityMatrix($n - $j);
+        $vvT = $this->createOuterProduct($v, $v);
+        $P = $P->subtract($vvT->multiply(new ComplexNumber(2, 0)));
+        
+        // Применяем преобразование к подматрице R
+        $subR = new Matrix($n - $j, $m - $j);
+        for ($i = $j; $i < $n; $i++) {
+            for ($k = $j; $k < $m; $k++) {
+                $subR->setElement([$i - $j, $k - $j], $R->getElement([$i, $k]));
             }
-            $P = $P->subtract($this->createOuterProduct($v, $v)->multiply(new ComplexNumber(2, 0)));
-            $R = $P->multiply($R);
-            $Q = $Q->multiply($P);
         }
+        
+        $subR = $P->multiply($subR);
+        
+        // Копируем результат обратно в R
+        for ($i = $j; $i < $n; $i++) {
+            for ($k = $j; $k < $m; $k++) {
+                $R->setElement([$i, $k], $subR->getElement([$i - $j, $k - $j]));
+            }
+        }
+        
+        // Обновляем Q
+        $fullP = $this->createIdentityMatrix($n);
+        for ($i = $j; $i < $n; $i++) {
+            for ($k = $j; $k < $n; $k++) {
+                $fullP->setElement([$i, $k], $P->getElement([$i - $j, $k - $j]));
+            }
+        }
+        $Q = $Q->multiply($fullP);
     }
 
     return [$Q, $R];
-} */
+}
+*/
 public function transpose()
 {
     $n = $this->dimensions[0];
@@ -895,20 +1134,7 @@ public function transpose()
     return $transposed;
 }
 
-public function subtract(Matrix $other)
-{
-    if ($this->dimensions != $other->dimensions) {
-        throw new Exception("Matrices must have the same dimensions");
-    }
 
-    $result = new Matrix($this->dimensions[0], $this->dimensions[1]);
-    for ($i = 0; $i < $this->dimensions[0]; $i++) {
-        for ($j = 0; $j < $this->dimensions[1]; $j++) {
-            $result->setElement([$i, $j], $this->getElement([$i, $j])->subtract($other->getElement([$i, $j])));
-        }
-    }
-    return $result;
-}
 private function createOuterProduct(Vector $u, Vector $v)
 {
     $n = $u->getDimensionsM()[1];
@@ -939,7 +1165,24 @@ private function givensQR()
         for ($i = $m - 1; $i >= $j + 1; $i--) {
             $r = $R->getElement([$i - 1, $j]);
             $s = $R->getElement([$i, $j]);
-            $norm = sqrt(pow($r->abs(), 2) + pow($s->abs(), 2));
+
+            if (is_a($r, 'ComplexNumber')) {
+                $rAbs = $r->abs();
+            } elseif (is_numeric($r)) {
+                $rAbs = abs($r);
+            } else {
+                throw new Exception("Unsupported operation");
+            }
+
+            if (is_a($s, 'ComplexNumber')) {
+                $sAbs = $s->abs();
+            } elseif (is_numeric($s)) {
+                $sAbs = abs($s);
+            } else {
+                throw new Exception("Unsupported operation");
+            }
+
+            $norm = sqrt(pow($rAbs, 2) + pow($sAbs, 2));
 
             if ($norm !== 0) {
                 $c = $r->divide(new ComplexNumber($norm, 0));
@@ -959,14 +1202,9 @@ private function givensQR()
 
     return [$Q, $R];
 }
-    // Реализации алгоритмов QR-факторизации
 
-    /**
-     * Выполняет QR-факторизацию матрицы с использованием алгоритма Грама-Шмидта.
-     *
-     * @return array Массив, содержащий матрицы Q и R.
-     
-    private function gramSchmidtQR()
+    
+     private function gramSchmidtQR()
     {
         $n = $this->dimensions[0];
         $m = $this->dimensions[1];
@@ -975,18 +1213,33 @@ private function givensQR()
 
         for ($j = 0; $j < $m; $j++) {
             $v = $R->getColumnVector($j);
+            if ($v->norm() == 0) {
+                continue; // Пропускаем нулевые векторы
+            }
+            
             for ($i = 0; $i < $j; $i++) {
                 $u = $Q->getColumnVector($i);
-                $projection = $u->multiply($u->dotProduct($v)->divide($u->dotProduct($u)));
-                $v = $v->subtract($projection);
+                $dotProduct = $u->dotProduct($v);
+                $denominator = $u->dotProduct($u);
+                
+                if ($denominator->abs() > 0) {
+                    $projection = $u->multiply($dotProduct->divide($denominator));
+                    $v = $v->subtract($projection);
+                }
             }
-            $R->setColumnVector($j, $v);
-            $Q->setColumnVector($j, $v->divide($v->norm()));
+            
+            $norm = $v->norm();
+            if ($norm > 0) {
+                $Q->setColumnVector($j, $v->divide(new ComplexNumber($norm, 0)));
+            }
         }
+
+        // Вычисляем R как Q^T * A
+        $R = $Q->transpose()->multiply($this);
 
         return [$Q, $R];
     }
-    */
+    
     /**
      * Выполняет LU-факторизацию матрицы с использованием выбранного алгоритма.
      *
@@ -1038,8 +1291,8 @@ private function givensQR()
     }
     return $result;
 }
+    
 }
-// Класс для векторов
 class Vector extends Matrix
 {
     public function __construct($data, $isComplex = false)
@@ -1081,7 +1334,7 @@ class Vector extends Matrix
                 return $this->euclideanAngle($other);
             case 'manhattan':
                 return $this->manhattanAngle($other);
-            //case 'minkowski':
+            case 'minkowski':
             //    return $this->minkowskiAngle($other);
             default:
                 throw new Exception("Invalid angle metric");
@@ -1119,30 +1372,42 @@ class Vector extends Matrix
 
         return acos($cosine / $manhattanNorm);
     }
-
-    private function minkowskiAngle(Vector $other, $p)
+/**
+     * Вычисляет угол между векторами с использованием метрики Минковского
+     * @param Vector $other Второй вектор
+     * @param float $p Параметр метрики Минковского
+     * @return float Угол между векторами
+     * @throws Exception если размерности векторов не совпадают
+     */
+    private function minkowskiAngle(Vector $other, $p = 3)
     {
         if ($this->dimensions != $other->dimensions) {
             throw new Exception("Vectors must have the same dimensions");
         }
 
-        $diff = array_map(function ($a, $b) use ($p)  {
+        $diff = array_map(function ($a, $b) use ($p) {
             return $a->subtract($b)->abs()->pow($p);
         }, $this->data[0], $other->data[0]);
 
         $minkowskiNorm = pow(array_sum($diff), 1 / $p);
 
         if ($minkowskiNorm == 0) {
-            return 0; // Угол между двумя одинаковыми векторами
+            return 0;
         }
 
         $cosine = 0;
         for ($i = 0; $i < $this->dimensions[1]; $i++) {
-            $cosine += min($this->getElement([0, $i])->abs()->pow($p), $other->getElement([0, $i])->abs()->pow($p));
+            $cosine += min(
+                $this->getElement([0, $i])->abs()->pow($p)->getReal(),
+                $other->getElement([0, $i])->abs()->pow($p)->getReal()
+            );
         }
 
         return acos($cosine / $minkowskiNorm);
     }
+
+
+
 
     public function visualize(Vector $other = null)
     {
@@ -1163,40 +1428,202 @@ class Vector extends Matrix
 }
 
 
+    /**
+     * Находит ядро линейного преобразования
+     * Ядро - это множество всех векторов, которые отображаются в нулевой вектор
+     * @param callable $transformation Функция линейного преобразования
+     * @return array Базисные векторы ядра преобразования
+     */
     public function kernelOfTransformation($transformation)
     {
-        // Реализация нахождения ядра линейного преобразования
+        // Применяем преобразование к единичным векторам базиса
+        $basis = [];
+        $nullVector = new Vector(array_fill(0, $this->dimensions[1], new ComplexNumber(0, 0)), true);
+        
+        // Создаем систему линейных уравнений
+        $equations = [];
+        $variables = [];
+        
+        // Генерируем базисные векторы
+        for ($i = 0; $i < $this->dimensions[1]; $i++) {
+            $basisVector = array_fill(0, $this->dimensions[1], new ComplexNumber(0, 0));
+            $basisVector[$i] = new ComplexNumber(1, 0);
+            $basis[] = new Vector($basisVector, true);
+        }
+        
+        // Для каждого базисного вектора применяем преобразование
+        foreach ($basis as $basisVector) {
+            $transformed = $transformation($basisVector);
+            if (!($transformed instanceof Vector)) {
+                throw new Exception("Transformation must return a Vector");
+            }
+            
+            // Добавляем уравнение T(v) = 0
+            $equations[] = $transformed->data[0];
+        }
+        
+        // Решаем систему линейных уравнений методом Гаусса
+        $gaussianElimination = function($matrix) {
+            $rows = count($matrix);
+            $cols = count($matrix[0]);
+            $rank = 0;
+            
+            for ($i = 0; $i < min($rows, $cols); $i++) {
+                // Находим ведущий элемент
+                $maxElement = $matrix[$i][$i]->abs();
+                $maxRow = $i;
+                
+                for ($k = $i + 1; $k < $rows; $k++) {
+                    if ($matrix[$k][$i]->abs() > $maxElement) {
+                        $maxElement = $matrix[$k][$i]->abs();
+                        $maxRow = $k;
+                    }
+                }
+                
+                if ($maxElement->getReal() < 1e-10) {
+                    continue;
+                }
+                
+                // Меняем строки местами
+                if ($maxRow != $i) {
+                    $temp = $matrix[$i];
+                    $matrix[$i] = $matrix[$maxRow];
+                    $matrix[$maxRow] = $temp;
+                }
+                
+                // Обнуляем элементы под главной диагональю
+                for ($k = $i + 1; $k < $rows; $k++) {
+                    $c = $matrix[$k][$i]->divide($matrix[$i][$i]);
+                    for ($j = $i; $j < $cols; $j++) {
+                        $matrix[$k][$j] = $matrix[$k][$j]->subtract(
+                            $matrix[$i][$j]->multiply($c)
+                        );
+                    }
+                }
+                $rank++;
+            }
+            
+            return ['matrix' => $matrix, 'rank' => $rank];
+        };
+        
+        $result = $gaussianElimination($equations);
+        $nullSpace = [];
+        
+        // Находим базис ядра из приведенной матрицы
+        $rank = $result['rank'];
+        $dim = $this->dimensions[1];
+        
+        if ($rank < $dim) {
+            // Для каждого свободного параметра создаем базисный вектор ядра
+            for ($i = $rank; $i < $dim; $i++) {
+                $vector = array_fill(0, $dim, new ComplexNumber(0, 0));
+                $vector[$i] = new ComplexNumber(1, 0);
+                
+                // Находим остальные компоненты вектора
+                for ($j = $rank - 1; $j >= 0; $j--) {
+                    $sum = new ComplexNumber(0, 0);
+                    for ($k = $j + 1; $k < $dim; $k++) {
+                        $sum = $sum->add($result['matrix'][$j][$k]->multiply($vector[$k]));
+                    }
+                    $vector[$j] = $sum->multiply(new ComplexNumber(-1, 0))
+                        ->divide($result['matrix'][$j][$j]);
+                }
+                
+                $nullSpace[] = new Vector($vector, true);
+            }
+        }
+        
+        return $nullSpace;
     }
 
+    /**
+     * Находит образ линейного преобразования
+     * Образ - это множество всех векторов, которые получаются в результате преобразования
+     * @param callable $transformation Функция линейного преобразования
+     * @return array Базисные векторы образа преобразования
+     */
     public function imageOfTransformation($transformation)
     {
-        // Реализация нахождения образа линейного преобразования
+        // Применяем преобразование к базисным векторам
+        $basis = [];
+        $images = [];
+        
+        // Генерируем базисные векторы
+        for ($i = 0; $i < $this->dimensions[1]; $i++) {
+            $basisVector = array_fill(0, $this->dimensions[1], new ComplexNumber(0, 0));
+            $basisVector[$i] = new ComplexNumber(1, 0);
+            $basis[] = new Vector($basisVector, true);
+        }
+        
+        // Для каждого базисного вектора применяем преобразование
+        foreach ($basis as $basisVector) {
+            $transformed = $transformation($basisVector);
+            if (!($transformed instanceof Vector)) {
+                throw new Exception("Transformation must return a Vector");
+            }
+            $images[] = $transformed;
+        }
+        
+        // Находим линейно независимые векторы среди образов
+        $independentVectors = [];
+        foreach ($images as $vector) {
+            $isIndependent = true;
+            
+            // Проверяем линейную независимость с уже найденными векторами
+            if (!empty($independentVectors)) {
+                $matrix = [];
+                foreach ($independentVectors as $indVector) {
+                    $matrix[] = $indVector->data[0];
+                }
+                $matrix[] = $vector->data[0];
+                
+                // Проверяем ранг матрицы
+                $rank = $this->matrixRank($matrix);
+                if ($rank <= count($independentVectors)) {
+                    $isIndependent = false;
+                }
+            }
+            
+            if ($isIndependent) {
+                $independentVectors[] = $vector;
+            }
+        }
+        
+        return $independentVectors;
     }
 
-    public function add(Matrix $other)
-{
-    if ($this->dimensions != $other->dimensions) {
-        throw new Exception("Vectors must have the same dimensions");
+    /**
+     * Вспомогательный метод для вычисления ранга матрицы
+     */
+    private function matrixRank($matrix)
+    {
+        $rows = count($matrix);
+        $cols = count($matrix[0]);
+        $rank = 0;
+        $processed = array_fill(0, $rows, false);
+        
+        for ($j = 0; $j < $cols && $rank < $rows; $j++) {
+            $i = 0;
+            while ($i < $rows && ($processed[$i] || $matrix[$i][$j]->abs()->getReal() < 1e-10)) {
+                $i++;
+            }
+            
+            if ($i < $rows) {
+                $rank++;
+                $processed[$i] = true;
+                for ($p = 0; $p < $rows; $p++) {
+                    if ($p != $i && $matrix[$p][$j]->abs()->getReal() > 1e-10) {
+                        $coef = $matrix[$p][$j]->divide($matrix[$i][$j]);
+                        for ($q = 0; $q < $cols; $q++) {
+                            $matrix[$p][$q] = $matrix[$p][$q]->subtract(
+                                $matrix[$i][$q]->multiply($coef)
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        
+        return $rank;
     }
-    return new Vector(array_map(function ($a, $b) {
-        return $a->add($b);
-    }, $this->data[0], $other->data[0]));
 }
-/**
-public function multiply($other)
-{
-    if (is_a($other, 'Vector')) {
-        return $this->dotProduct($other);
-    } elseif (is_a($other, 'Matrix')) {
-        return parent::multiply($other);
-    } else {
-        return new Vector(array_map(function ($a) use ($other) {
-            return $a->multiply(is_a($other, 'ComplexNumber') ? $other : new ComplexNumber($other, 0));
-        }, $this->data[0]));
-    }
-}*/
-
-
-    // Другие операции из Matrix, применимые к векторам
-}
-
